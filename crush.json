@@ -36,5 +36,24 @@
         "semanticTokens": true
       }
     }
+  },
+  "providers": {
+    "circuit": {
+      "type": "circuit",
+      "base_url": "https://chat-ai.cisco.com",
+      "api_key": "$CIRCUIT_API_ACCESS_TOKEN",
+      "provider_options": {
+        "appkey": "$CIRCUIT_API_APP_KEY",
+        "apiVersion": "2025-04-01-preview"
+      },
+      "models": [
+        {
+          "id": "gpt-5-nano",
+          "name": "GPT-5 Nano",
+          "context_window": 128000,
+          "default_max_tokens": 16384
+        }
+      ]
+    }
   }
 }

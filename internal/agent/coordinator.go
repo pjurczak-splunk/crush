@@ -50,6 +50,7 @@ import (
 	"charm.land/fantasy/providers/openaicompat"
 	"charm.land/fantasy/providers/openrouter"
 	"charm.land/fantasy/providers/vercel"
+	openaiazure "github.com/openai/openai-go/v3/azure"
 	openaisdk "github.com/openai/openai-go/v3/option"
 	"github.com/qjebbs/go-jsons"
 )
@@ -1026,6 +1027,86 @@ func (c *coordinator) buildAzureProvider(baseURL, apiKey string, headers map[str
 	return azure.New(opts...)
 }
 
+func (c *coordinator) buildCircuitProvider(baseURL, apiKey string, headers map[string]string, options map[string]string) (fantasy.Provider, error) {
+	apiVersion := circuitDefaultAPIVersion
+	var userValue string
+	if options != nil {
+		if v, ok := options["apiVersion"]; ok {
+			resolved, err := c.resolveProviderOptionString(v)
+			if err != nil {
+				return nil, fmt.Errorf("resolving circuit apiVersion: %w", err)
+			}
+			if resolved != "" {
+				apiVersion = resolved
+			}
+		}
+		if v, ok := options["user"]; ok {
+			resolved, err := c.resolveProviderOptionString(v)
+			if err != nil {
+				return nil, fmt.Errorf("resolving circuit user: %w", err)
+			}
+			if resolved != "" {
+				userValue = resolved
+			}
+		}
+		if v, ok := options["appkey"]; ok && userValue == "" {
+			resolved, err := c.resolveProviderOptionString(v)
+			if err != nil {
+				return nil, fmt.Errorf("resolving circuit appkey: %w", err)
+			}
+			if resolved != "" {
+				userValue = fmt.Sprintf(`{"appkey":%q}`, resolved)
+			}
+		}
+	}
+	if apiKey == "" {
+		return nil, fmt.Errorf("circuit provider requires api_key to be set to the access token")
+	}
+	if baseURL == "" {
+		return nil, fmt.Errorf("circuit provider requires base_url to be set")
+	}
+	if userValue == "" {
+		return nil, fmt.Errorf("circuit provider requires provider_options.appkey or provider_options.user to be set")
+	}
+
+	delete(headers, "Authorization")
+	delete(headers, "authorization")
+	headers["api-key"] = apiKey
+
+	opts := []openai.Option{
+		openai.WithName("circuit"),
+		openai.WithSDKOptions(
+			openaiazure.WithEndpoint(baseURL, apiVersion),
+		),
+	}
+	opts = append(opts, openai.WithSDKOptions(openaisdk.WithJSONSet("user", userValue)))
+	if c.cfg.Config().Options.Debug {
+		httpClient := log.NewHTTPClient()
+		opts = append(opts, openai.WithHTTPClient(httpClient))
+	}
+	if len(headers) > 0 {
+		opts = append(opts, openai.WithHeaders(headers))
+	}
+	slog.Info("Configured Circuit provider", "base_url", baseURL, "api_version", apiVersion, "has_user", userValue != "", "has_access_token", apiKey != "")
+
+	return openai.New(opts...)
+}
+
+func (c *coordinator) resolveProviderOptionString(value any) (string, error) {
+	if value == nil {
+		return "", nil
+	}
+
+	str := fmt.Sprint(value)
+	if str == "" {
+		return "", nil
+	}
+
+	return c.cfg.Resolve(str)
+}
+
+const circuitDefaultAPIVersion = "2025-04-01-preview"
+
 func (c *coordinator) buildBedrockProvider(apiKey string, headers map[string]string, providerID string) (fantasy.Provider, error) {
 	var opts []bedrock.Option
 	if c.cfg.Config().Options.Debug {
@@ -1133,6 +1214,8 @@ func (c *coordinator) buildProvider(providerCfg config.ProviderConfig, model con
 		return c.buildVercelProvider(baseURL, apiKey, headers)
 	case azure.Name:
 		return c.buildAzureProvider(baseURL, apiKey, headers, providerCfg.ExtraParams)
+	case "circuit":
+		return c.buildCircuitProvider(baseURL, apiKey, headers, providerOptionsToStringMap(providerCfg.ProviderOptions))
 	case bedrock.Name:
 		return c.buildBedrockProvider(apiKey, headers, providerCfg.ID)
 	case google.Name:
@@ -1159,6 +1242,24 @@ func (c *coordinator) buildProvider(providerCfg config.ProviderConfig, model con
 		}
 		return nil, fmt.Errorf("provider type not supported: %q", providerCfg.Type)
 	}
+}
+
+func providerOptionsToStringMap(options map[string]any) map[string]string {
+	if len(options) == 0 {
+		return nil
+	}
+
+	result := make(map[string]string, len(options))
+	for key, value := range options {
+		if value == nil {
+			continue
+		}
+		result[key] = fmt.Sprint(value)
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
 }
 
 func isExactoSupported(modelID string) bool {

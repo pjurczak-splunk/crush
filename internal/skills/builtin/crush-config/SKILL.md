@@ -130,10 +130,48 @@ reviewed.
 }
 ```
 
-- `type` (required): `openai`, `openai-compat`, `anthropic`, or a local provider type (`llamacpp`, `omlx`, `lmstudio`, `litellm`, `ollama`)
+- `type` (required): `openai`, `openai-compat`, `anthropic`, `circuit`, or a local provider type (`llamacpp`, `omlx`, `lmstudio`, `litellm`, `ollama`)
 - `api_key`, `base_url`, `api_endpoint`, and `extra_headers` are shell-expanded (see [Shell Expansion](#shell-expansion)).
 - `extra_body` is a JSON passthrough and is **not** expanded.
 - Additional fields: `disable`, `system_prompt_prefix`, `extra_headers`, `extra_body`, `provider_options`.
+
+### Circuit
+
+Circuit uses the Azure-style deployment endpoint. Set `base_url` to the host
+root and `provider_options.apiVersion` to the API version your deployment
+expects. The deployment path comes from the selected model ID.
+
+```json
+{
+  "providers": {
+    "circuit": {
+      "type": "circuit",
+      "base_url": "https://chat-ai.cisco.com",
+      "api_key": "$CIRCUIT_API_ACCESS_TOKEN",
+      "provider_options": {
+        "appkey": "$CIRCUIT_API_APP_KEY",
+        "apiVersion": "2025-04-01-preview"
+      },
+      "models": [
+        {
+          "id": "gpt-5-nano",
+          "name": "GPT-5 Nano",
+          "context_window": 128000
+        }
+      ]
+    }
+  }
+}
+```
+
+Circuit sends the access token as `api-key` and injects the app key into the
+request body as the `user` field. If you want to set the body directly, you
+can use `provider_options.user` with a JSON string such as
+`{"appkey":"..."}`.
+Crush resolves string-valued `provider_options` fields for Circuit at build
+time, so env references like `$CIRCUIT_API_APP_KEY` work there too.
+
+If your deployment also needs extra headers, add them under `extra_headers`.
 
 ## LSP Configuration
 

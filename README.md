@@ -753,6 +753,54 @@ API. Don't forget to set `DEEPSEEK_API_KEY` in your environment.
 }
 ```
 
+#### Circuit
+
+Circuit can be configured as a first-class provider type. It uses the
+Azure-style deployment endpoint, so set `base_url` to the host root and let
+the deployment come from the selected model ID.
+
+```json
+{
+  "$schema": "https://charm.land/crush.json",
+  "providers": {
+    "circuit": {
+      "type": "circuit",
+      "base_url": "https://chat-ai.cisco.com",
+      "api_key": "$CIRCUIT_API_ACCESS_TOKEN",
+      "provider_options": {
+        "appkey": "$CIRCUIT_API_APP_KEY",
+        "apiVersion": "2025-04-01-preview"
+      },
+      "models": [
+        {
+          "id": "gpt-5-nano",
+          "name": "GPT-5 Nano",
+          "context_window": 128000,
+          "default_max_tokens": 16384
+        }
+      ]
+    }
+  }
+}
+```
+
+Circuit sends the access token as `api-key` and injects the app key into the
+request body as the `user` field. If you prefer to set the body explicitly,
+you can also provide `provider_options.user` with a JSON string like
+`{"appkey":"..."}`.
+Crush resolves string-valued `provider_options` fields for Circuit at build
+time, so env references like `$CIRCUIT_API_APP_KEY` work there too.
+
+If your deployment needs additional headers, add them with `extra_headers`:
+
+```json
+{
+  "extra_headers": {
+    "Some-Header": "value"
+  }
+}
+```
+
 #### Anthropic-Compatible APIs
 
 Custom Anthropic-compatible providers follow this format:
