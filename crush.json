@@ -52,8 +52,25 @@
           "name": "GPT-5 Nano",
           "context_window": 128000,
           "default_max_tokens": 16384
+        },
+	{
+          "id": "gemini-3.1-flash-lite",
+          "name": "GEMINI-3.1 Flash Lite",
+          "context_window": 128000,
+          "default_max_tokens": 16384
         }
       ]
     }
+  },
+  "mcp": {
+     "circuit": {
+       "type": "stdio",
+       "command": "/Users/pjurczak/pj-code/ai-starter/circuit-mcp-master/.venv/bin/python3.13",
+       "args": ["/Users/pjurczak/pj-code/ai-starter/circuit-mcp-master/circuit_mcp_server.py"]
+     },
+     "atlassian": {
+       "type": "http",
+       "url": "https://mcp.atlassian.com/v1/mcp"
+     }
   }
 }
