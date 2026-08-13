@@ -50,6 +50,12 @@ Thumbs.db
 /crush
 /tmp/
 
+/crush-circuit/
+crushfromuser-local-share-crush.json
+crush-mcp.json
+crush-mcp-session.md
+/circuit-provider/
+
 manpages/
 completions/crush.*sh
 .prettierignore
