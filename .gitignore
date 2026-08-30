@@ -50,6 +50,8 @@ Thumbs.db
 /crush
 /tmp/
 
+crush-circuit/
+
 manpages/
 completions/crush.*sh
 .prettierignore

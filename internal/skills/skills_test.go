@@ -446,6 +446,19 @@ func TestDiscoverBuiltin(t *testing.T) {
 		}
 	}
 	require.True(t, foundHooks, "crush-hooks builtin skill not found")
+
+	var foundCircuitMCP bool
+	for _, s := range discovered {
+		if s.Name == "circuit-mcp" {
+			foundCircuitMCP = true
+			require.Equal(t, "crush://skills/circuit-mcp/SKILL.md", s.SkillFilePath)
+			require.Equal(t, "crush://skills/circuit-mcp", s.Path)
+			require.NotEmpty(t, s.Description)
+			require.NotEmpty(t, s.Instructions)
+			require.True(t, s.Builtin)
+		}
+	}
+	require.True(t, foundCircuitMCP, "circuit-mcp builtin skill not found")
 }
 
 func TestDeduplicate(t *testing.T) {

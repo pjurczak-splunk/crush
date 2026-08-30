@@ -1,5 +1,6 @@
 {
   "$schema": "https://charm.land/crush.json",
+  "default_model": "circuit/gpt-5-nano",
   "lsp": {
     "gopls": {
       "options": {
@@ -36,5 +37,16 @@
         "semanticTokens": true
       }
     }
+  },
+  "mcp": {
+     "circuit": {
+       "type": "stdio",
+       "command": "${CIRCUIT_MCP_PATH}/.venv/bin/python3.13",
+       "args": ["${CIRCUIT_MCP_PATH}/circuit_mcp_server.py"]
+     },
+     "atlassian": {
+       "type": "http",
+       "url": "https://mcp.atlassian.com/v1/mcp"
+     }
   }
 }
